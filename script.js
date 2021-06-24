@@ -1,11 +1,9 @@
-let displayValue = [];
-let currentOperator = [];
-let mathValue = [];
-let output = document.getElementById('output');
-let number = document.querySelectorAll('.number');
-let operator = document.querySelectorAll('.operator')
-let currentTotal;
-let firstVal;
+let output = document.querySelector('#output');
+let firstValue = '';
+let secondValue = '';
+let operationValue = '';
+let currentTotal = '';
+
 function addition(x, y){
     return x + y;
 };
@@ -22,58 +20,91 @@ function division(x, y){
     return x / y;
 };
 
-function percentage(x){
-    return x / 100;
-};
-
-function operate(x, y, operatorVal){
-    return operatorVal === '+' ? addition(x, y)
-         : operatorVal === '-' ? subtraction(x, y)
-         : operatorVal === 'x' ? multiplication(x, y)
-         : operatorVal === '/' ? division(x, y)
-         : operatorVal === '%' ? percentage(x)
-         : x && y === 0 ? 'You can\'t divide by 0'
-         : output.textContent = 'ERROR';
+function operate(x, y, operator) {
+    const operations = {
+      '+': addition,
+      '-': subtraction,
+      'x': multiplication,
+      '/': division
+    }
+    
+    try {
+      return operations[operator](x, y);
+    } catch {
+      return "error"
+    }
 };
 
 function clear(){
-    displayValue.splice(0, displayValue.length);
-    currentOperator.splice(0, currentOperator.length);
-    mathValue.splice(0, mathValue.length);
+    output.innerText = '';
+    firstValue = '';
+    secondValue = '';
+    operationValue = '';
     document.getElementById('period').disabled = false;
 };
+
+function periodAppear(){
+    document.getElementById('period').disabled = false;
+};
+
+function displayInfo(){
+    output.innerHTML = '';
+    const info = document.createElement('div');
+    info.setAttribute('id', "outputText");
+    info.innerText = firstValue + ' ' + operationValue + ' ' + secondValue;
+    output.appendChild(info);
+};
+
+function allButton(event){
+    const inputValue = event.target.value;
+    if(inputValue === '+' || inputValue === '-' || inputValue === 'x' || inputValue === '/'){
+        periodAppear();
+        if(firstValue && secondValue){
+            firstValue = operate(parseFloat(firstValue), parseFloat(secondValue), operationValue).toFixed(2);
+            operationValue = inputValue;
+            secondValue = '';
+        }
+        else if (firstValue){
+            operationValue = inputValue;
+        }
+    }
+    else if(inputValue === '='){
+        periodAppear();
+        if(!(secondValue)){
+            firstValue = 'ERROR'
+            operationValue = '';
+        }
+        if(firstValue && operationValue && secondValue){
+            firstValue = operate(parseFloat(firstValue), parseFloat(secondValue), operationValue).toFixed(2);
+            secondValue = '';
+            operationValue = '';
+        }
+    }
+    else if(inputValue === 'd'){
+        if(firstValue && operationValue && !(secondValue)){
+            operationValue = operationValue.slice(0, -1);
+        }
+        else if(firstValue && operationValue){
+            secondValue = secondValue.slice(0, -1);
+        }
+        else{
+            firstValue = firstValue.slice(0, -1);
+        }
+    }
+    else if(firstValue && operationValue) {
+        secondValue += inputValue;
+    }
+    else{
+        firstValue += inputValue;
+    }
+    displayInfo();
+};
+
+document.getElementById('clear').addEventListener('click', clear);
 
 document.getElementById('period').addEventListener('click', () =>{
     document.getElementById('period').disabled = true;
 });
 
-number.forEach(element => element.addEventListener('click', e => {
-    let currentValue = e.target.textContent;
-    displayValue.push(currentValue);
-    output.textContent = displayValue.join('');
-    mathValue[0] = parseFloat(displayValue.join(''));
-    console.table(mathValue);
-}));
+document.querySelectorAll('.equation').forEach(element => element.addEventListener('click', allButton));
 
-operator.forEach(element => element.addEventListener('click', e => {
-    displayValue.splice(0, displayValue.length);
-    firstVal = mathValue[0];
-    let operatorValue = String(e.target.textContent);
-    output.textContent = operatorValue;
-    currentOperator.push(operatorValue);
-    mathValue.splice(0, mathValue.length);
-}));
-
-document.getElementById('clear').addEventListener('click', () => {
-    clear();
-    output.textContent = 0;
-});
-
-document.getElementById('equalSign').addEventListener('click', () =>{
-        currentTotal = operate(firstVal, mathValue[0], String(currentOperator[0]))
-        if(isNaN(currentTotal)){
-            return output.textContent = 'ERROR';
-        }
-        output.textContent = currentTotal.toFixed(2);
-            clear();
-})
